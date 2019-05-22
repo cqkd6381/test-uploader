@@ -10,9 +10,13 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "bootstrap": "^3.4.1",
+    "bootstrap-datepicker": "^1.8.0",
     "core-js": "^2.6.5",
+    "jquery": "^1.12.4",
     "vue": "^2.6.10",
     "vue-router": "^3.0.3",
+    "vue-simple-uploader": "^0.7.1",
     "vuex": "^3.0.1"
   },
   "devDependencies": {
