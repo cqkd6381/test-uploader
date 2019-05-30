@@ -9,6 +9,7 @@ import "bootstrap-datepicker/dist/css/bootstrap-datepicker.css"
 import "bootstrap/dist/js/bootstrap.js"
 import "bootstrap-datepicker/dist/js/bootstrap-datepicker.js"
 import "bootstrap-datepicker/dist/locales/bootstrap-datepicker.zh-CN.min.js"
+
 Vue.config.productionTip = false
 Vue.use(uploader)
 new Vue({
