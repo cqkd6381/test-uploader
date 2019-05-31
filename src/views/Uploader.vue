@@ -44,7 +44,7 @@
             <a
               class="progress-resume-link"
               href="javascript:;"
-              onclick="r.upload()"
+              @click="upload"
               v-show="isShowProgressResume"
             >
               <img src="@/assets/resume.png" title="Resume upload">
@@ -52,7 +52,7 @@
             <a
               class="progress-pause-link"
               href="javascript:;"
-              onclick="r.pause()"
+              @click="pause"
               v-show="isShowProgressPause"
             >
               <img src="@/assets/pause.png" title="Pause upload">
@@ -60,7 +60,7 @@
             <a
               class="progress-cancel-link"
               href="javascript:;"
-              onclick="r.cancel()"
+              @click="cancel"
               v-show="isShowProgressCancle"
             >
               <img src="@/assets/cancel.png" title="Cancel upload">
@@ -73,12 +73,12 @@
       <li class="uploader-file" v-for="file in fileList" :key="file.id">
         Uploading----
         <span class="uploader-file-name">{{file.name}}----</span>
-        <span
-          class="uploader-file-size"
-        >{{formatProgress(file.progress())}}----{{file.getFormatSize()}}----</span>
-        <span class="uploader-file-progress">{{formatSize(file.averageSpeed)}}----</span>
-        <span class="uploader-file-progress">{{file.timeRemaining()}}----</span>
-        <span class="uploader-file-progress">(completed)----</span>
+        <span class="uploader-file-size">{{file.getFormatSize()}}----</span>
+        <span class="uploader-file-progress">
+          <span>已上传：{{formatProgress(file.progress())}}%----</span>
+          <span>上传速率：{{formatSize(file.averageSpeed)}} / s----</span>
+          <span>剩余时间：{{secondsToStr(file.timeRemaining())}}----</span>
+        </span>
         <span class="uploader-file-pause" @click="pauseFile(file)" v-show="file.paused">
           暂停
           <img src="@/assets/pause.png" title="Pause upload">
@@ -97,7 +97,8 @@
 
 <script>
 import Uploader from "simple-uploader.js";
-// import { login, test } from "../api/index";
+import { setToken } from "../api/auth";
+import { login, test } from "../api/index";
 
 export default {
   name: "Uploader",
@@ -121,7 +122,12 @@ export default {
     };
   },
   created() {
-    // test();
+    login()
+      .then(res => {
+        let token = res.entity.token;
+        setToken(token);
+      })
+      .catch();
     const uploader = new Uploader(this.options);
     this.uploader = uploader;
   },
@@ -132,19 +138,65 @@ export default {
     }
     this.isShowDrop = true;
     // this.uploader.on("fileAdded", this.fileAdded);
-    this.uploader.on("filesAdded", this.filesAdded);
-    this.uploader.on("fileSuccess", this.fileSuccess);
+    this.on("filesAdded", this.filesAdded);
+    this.on("fileSuccess", this.fileSuccess);
     // this.uploader.on("filesSubmitted", this.filesSubmitted);
-    this.uploader.assignDrop(this.$refs.drop);
-    this.uploader.assignBrowse(this.$refs.file);
-    this.uploader.assignBrowse(this.$refs.folder, true);
-    this.uploader.assignBrowse(this.$refs.image, false, false, {
+    this.assignDrop(this.$refs.drop);
+    this.assignBrowse(this.$refs.file);
+    this.assignBrowse(this.$refs.folder, true);
+    this.assignBrowse(this.$refs.image, false, false, {
       accept: "image/*"
     });
   },
   methods: {
-    filesAdded(files, fileList) {
-      let that = this;
+    // ------------------Uploader-------------------
+    // ------方法--------
+    assignDrop(domNodes) {
+      this.uploader.assignDrop(domNodes);
+    },
+    assignBrowse(domNodes, isDirectory, singleFile, attributes) {
+      this.uploader.assignBrowse(domNodes, isDirectory, singleFile, attributes);
+    },
+    unAssignDrop(domNodes) {
+      this.uploader.unAssignDrop(domNodes);
+    },
+    on(event, callback) {
+      this.uploader.on(event, callback);
+    },
+    off(event, callback) {},
+    upload() {
+      this.uploader.upload();
+    },
+    pause() {
+      this.uploader.pause();
+    },
+    resume() {
+      this.uploader.resume();
+    },
+    cancel() {
+      this.uploader.cancel();
+    },
+    progress() {
+      this.uploader.progress();
+    },
+    isUploading() {},
+    addFile() {},
+    removeFile() {},
+    getFromUniqueIdentifier() {},
+    getSize() {},
+    sizeUploaded() {},
+    timeRemaining() {},
+
+    // ------事件--------
+    fileSuccess(rootFile, file, message, chunk) {
+      console.log(1111);
+    },
+    fileComplete(rootFile) {
+      console.log("fileComplete");
+    },
+    fileProgress(rootFile, file, chunk) {},
+    fileAdded(file, event) {},
+    filesAdded(files, fileList, event) {
       this.files = files;
       this.fileList = fileList.map(function(file) {
         file.isShowPause = true;
@@ -156,16 +208,17 @@ export default {
       this.isShowProgressPause = true;
       this.isShowProgressCancle = true;
     },
-    fileSuccess(rootFile, file, message, chunk) {
-      console.log(1111);
-    },
-    filesSubmitted(files, fileList) {
-      // this.uploader.upload();
-    },
+    filesSubmitted(files, fileList, event) {},
+    fileRemoved(file) {},
+    fileRetry(rootFile, file, chunk) {},
+    fileError(rootFile, file, message, chunk) {},
+    uploadStart() {},
     complete() {
       this.isShowProgressPause = false;
       this.isShowProgressCancle = false;
     },
+
+    // ------------------Uploader.File-------------------
     // 暂停
     pauseFile(file) {
       console.log(111111);
@@ -187,7 +240,7 @@ export default {
       this.fileList.splice(index, 1);
     },
     formatProgress(progress) {
-      return "已上传：" + Math.floor(progress * 100) + "%";
+      return Math.floor(progress * 100);
     },
     formatSize: function(size) {
       let formatSize;
@@ -200,7 +253,30 @@ export default {
       } else {
         formatSize = (size / 1024.0 / 1024.0 / 1024.0).toFixed(1) + " GB";
       }
-      return "上传速率：" + formatSize + " / s";
+      return formatSize;
+    },
+    secondsToStr: function(temp) {
+      function numberEnding(number) {
+        return number > 1 ? "s" : "";
+      }
+      var years = Math.floor(temp / 31536000);
+      if (years) {
+        return years + " year" + numberEnding(years);
+      }
+      var days = Math.floor((temp %= 31536000) / 86400);
+      if (days) {
+        return days + " day" + numberEnding(days);
+      }
+      var hours = Math.floor((temp %= 86400) / 3600);
+      if (hours) {
+        return hours + " hour" + numberEnding(hours);
+      }
+      var minutes = Math.floor((temp %= 3600) / 60);
+      if (minutes) {
+        return minutes + " minute" + numberEnding(minutes);
+      }
+      var seconds = temp % 60;
+      return seconds + " second" + numberEnding(seconds);
     }
   }
 };

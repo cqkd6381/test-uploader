@@ -13,10 +13,18 @@ export function login() {
     }
   })
 }
-
+// 本地上传测试
 export function test() {
   return fetch({
     url: '/upload',
     method: 'get'
+  })
+}
+// 上传文件：第一步：申请上传地址
+export function uploadFirst(params) {
+  return fetch({
+    url: '/file/0',
+    method: 'get',
+    params: params
   })
 }

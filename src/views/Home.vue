@@ -85,7 +85,7 @@ export default {
         //   return params;
         // },
         // // ----------------
-        autoStart: false,
+        autoStart: false
         // parseTimeRemaining: function(timeRemaining, parsedTimeRemaining) {
         //   return parsedTimeRemaining
         //     .replace(/\syears?/, "年")
